@@ -3,8 +3,9 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Security.Cryptography.X509Certificates;
 using EasyNetQ.Loggers;
+using TrainingManagementSystem.EventBusEasyNetQ;
 
-namespace ServiceBusEasyNetQ.Infrastructure.EventBusEasyNetQ
+namespace TrainingManagementSystem.EventBusEasyNetQ
 {
     public class DefaultEasyNetQPersisterConnection : IEasyNetQPersisterConnection
     {

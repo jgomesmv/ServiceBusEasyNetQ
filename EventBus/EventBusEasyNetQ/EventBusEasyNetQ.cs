@@ -1,26 +1,24 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using Autofac;
 using EasyNetQ;
 using EasyNetQ.Topology;
-using RabbitMQ.Client.Framing.Impl;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Text;
+using System.Threading.Tasks;
+using TrainingManagementSystem.EventBus;
+using TrainingManagementSystem.EventBus.Abstractions;
+using TrainingManagementSystem.EventBus.Events;
 
-namespace ServiceBusEasyNetQ.Infrastructure.EventBusEasyNetQ
+namespace TrainingManagementSystem.EventBusEasyNetQ
 {
-    using Autofac;
-    using EasyNetQ.NonGeneric;
-    using ServiceBusMassTransit.Infrastructure.EventBus;
-    using EventBus.Abstractions;
-    using EventBus.Events;
-    using Microsoft.Extensions.Logging;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using System;
-    using System.Text;
-    using System.Threading.Tasks;
 
-    public class EventBusEasyNetQ : IEventBus
+
+    public class EventBusEasyNetQ : EventBus.Abstractions.IEventBus
     {
         private readonly IEasyNetQPersisterConnection _serviceBusPersisterConnection;
-        private readonly ILogger<EventBusEasyNetQ> _logger;
+        private readonly ILogger<DefaultEasyNetQPersisterConnection> _logger;
         private readonly IEventBusSubscriptionsManager _subsManager;
         private readonly IBus _bus;
         private readonly ILifetimeScope _autofac;
@@ -28,13 +26,13 @@ namespace ServiceBusEasyNetQ.Infrastructure.EventBusEasyNetQ
         private const string INTEGRATION_EVENT_SUFIX = "IntegrationEvent";
 
         public EventBusEasyNetQ(IEasyNetQPersisterConnection serviceBusPersisterConnection,
-            ILogger<EventBusEasyNetQ> logger, IEventBusSubscriptionsManager subsManager, IBus bus,
+            ILogger<DefaultEasyNetQPersisterConnection> logger, IEventBusSubscriptionsManager subsManager,
             ILifetimeScope autofac)
         {
             _serviceBusPersisterConnection = serviceBusPersisterConnection;
             _logger = logger;
             _subsManager = subsManager ?? new InMemoryEventBusSubscriptionsManager();
-            _bus = bus;
+            _bus = serviceBusPersisterConnection.CreateModel();
 
             _autofac = autofac;
         }

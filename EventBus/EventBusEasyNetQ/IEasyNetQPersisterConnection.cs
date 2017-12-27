@@ -1,4 +1,4 @@
-﻿namespace ServiceBusEasyNetQ.Infrastructure.EventBusEasyNetQ
+﻿namespace TrainingManagementSystem.EventBusEasyNetQ
 {
     using EasyNetQ;
     using System;
