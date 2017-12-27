@@ -37,7 +37,7 @@ namespace RegistrationManagement
             {
                 var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
 
-                string connectionString = "";
+                var connectionString = "";
 
                 return new DefaultEasyNetQPersisterConnection(connectionString, logger);
             });
@@ -69,19 +69,19 @@ namespace RegistrationManagement
         {
             services.AddSingleton<IEventBus, EventBusEasyNetQ>(sp =>
             {
-                var rabbitMQPersistentConnection = sp.GetRequiredService<IEasyNetQPersisterConnection>();
+                var easyNetQPersisterConnection = sp.GetRequiredService<IEasyNetQPersisterConnection>();
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
                 var eventBusSubcriptionsManager = sp.GetRequiredService<IEventBusSubscriptionsManager>();
 
                 var retryCount = 5;
 
-                return new EventBusEasyNetQ(rabbitMQPersistentConnection, logger, eventBusSubcriptionsManager, iLifetimeScope);
+                return new EventBusEasyNetQ(easyNetQPersisterConnection, logger, eventBusSubcriptionsManager, iLifetimeScope);
             });
-            
 
             services.AddSingleton<IEventBusSubscriptionsManager, InMemoryEventBusSubscriptionsManager>();
 
+            // Event handlers instances
             services.AddTransient<TrainingSessionAddedIntegrationEventHandler>();
             services.AddTransient<TrainingSessionAddedIntegrationEventHandler>();
         }

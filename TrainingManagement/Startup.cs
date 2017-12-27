@@ -15,7 +15,7 @@ using RabbitMQ.Client;
 using TrainingManagement.IntegrationEvents;
 using TrainingManagementSystem.EventBus;
 using TrainingManagementSystem.EventBus.Abstractions;
-using TrainingManagementSystem.EventBusRabbitMQ;
+using TrainingManagementSystem.EventBusEasyNetQ;
 
 namespace TrainingManagement
 {
@@ -35,23 +35,13 @@ namespace TrainingManagement
 
             services.AddTransient<ITrainingSessionIntegrationEventService, TrainingSessionIntegrationEventService>();
 
-            services.AddSingleton<IRabbitMQPersistentConnection>(sp =>
+            services.AddSingleton<IEasyNetQPersisterConnection>(sp =>
             {
-                var logger = sp.GetRequiredService<ILogger<DefaultRabbitMQPersistentConnection>>();
+                var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
 
-                var factory = new ConnectionFactory()
-                {
-                    HostName = "localhost"
-                };
+                var connectionString = "";
 
-                //factory.UserName = "user";
-                //factory.Password = "password";
-                factory.VirtualHost = "/";
-                factory.Protocol = Protocols.DefaultProtocol;
-                factory.Port = AmqpTcpEndpoint.UseDefaultPort;
-                var retryCount = 5;
-
-                return new DefaultRabbitMQPersistentConnection(factory, logger, retryCount);
+                return new DefaultEasyNetQPersisterConnection(connectionString, logger);
             });
 
             RegisterEventBus(services);
@@ -77,21 +67,20 @@ namespace TrainingManagement
 
         private void RegisterEventBus(IServiceCollection services)
         {
-            services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp =>
+            services.AddSingleton<IEventBus, EventBusEasyNetQ>(sp =>
             {
-                var rabbitMQPersistentConnection = sp.GetRequiredService<IRabbitMQPersistentConnection>();
+                var easyNetQPersisterConnection = sp.GetRequiredService<IEasyNetQPersisterConnection>();
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
-                var logger = sp.GetRequiredService<ILogger<EventBusRabbitMQ>>();
+                var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
                 var eventBusSubcriptionsManager = sp.GetRequiredService<IEventBusSubscriptionsManager>();
 
-                var retryCount = 5;
-
-                return new EventBusRabbitMQ(rabbitMQPersistentConnection, logger, iLifetimeScope, eventBusSubcriptionsManager, retryCount);
+                return new EventBusEasyNetQ(easyNetQPersisterConnection, logger, eventBusSubcriptionsManager, iLifetimeScope);
             });
 
 
             services.AddSingleton<IEventBusSubscriptionsManager, InMemoryEventBusSubscriptionsManager>();
 
+            // Event handlers instances
             //services.AddTransient<TrainingSessionChangedIntegrationEventHandler>();
         }
 
