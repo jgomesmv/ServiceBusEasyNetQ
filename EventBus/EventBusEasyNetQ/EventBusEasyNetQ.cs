@@ -13,8 +13,6 @@ using TrainingManagementSystem.EventBus.Events;
 
 namespace TrainingManagementSystem.EventBusEasyNetQ
 {
-
-
     public class EventBusEasyNetQ : EventBus.Abstractions.IEventBus
     {
         private readonly IEasyNetQPersisterConnection _serviceBusPersisterConnection;
@@ -43,7 +41,7 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
             var jsonMessage = JsonConvert.SerializeObject(@event);
 
             var properties = new MessageProperties();
-            properties.MessageId = new Guid().ToString();
+            properties.CorrelationId = eventName;
             var body = Encoding.UTF8.GetBytes(jsonMessage);
 
             _bus.Advanced.Publish(Exchange.GetDefault(), eventName, false, properties, body);
@@ -66,7 +64,16 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
             {
                 try
                 {
-                    _bus.Subscribe<T>(eventName, msg => ProcessEvent<T>(msg));
+                    var queue = _bus.Advanced.QueueDeclare(eventName);
+                    var exchange = _bus.Advanced.ExchangeDeclare(eventName, ExchangeType.Topic);
+                    _bus.Advanced.Bind(exchange, queue, eventName);
+
+                    _bus.Advanced.Consume(queue, (body, properties, info) => Task.Factory.StartNew(async () =>
+                    {
+                        var message = Encoding.UTF8.GetString(body);
+                        eventName = $"{properties.CorrelationId}{INTEGRATION_EVENT_SUFIX}";
+                        await ProcessEvent(eventName, message);
+                    }));
                 }
                 catch (EasyNetQException)
                 {
@@ -75,6 +82,11 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
             }
 
             _subsManager.AddSubscription<T, TH>();
+        }
+
+        public void helper()
+        {
+            Console.WriteLine($"Event received!");
         }
 
         public void Unsubscribe<T, TH>()
@@ -107,11 +119,8 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
             _subsManager.Clear();
         }
 
-        private async Task ProcessEvent<T>(T obj)
+        private async Task ProcessEvent(string eventName, string message)
         {
-            string eventName = (string)obj.GetType().GetProperty("routingKey").GetValue(obj, null);
-            string message = Encoding.UTF8.GetString((byte[])obj.GetType().GetProperty("Body").GetValue(obj, null));
-
             if (_subsManager.HasSubscriptionsForEvent(eventName))
             {
                 using (var scope = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME))

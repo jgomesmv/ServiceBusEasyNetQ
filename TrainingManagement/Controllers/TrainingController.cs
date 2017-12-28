@@ -44,7 +44,7 @@ namespace TrainingManagement.Controllers
             var trainingSessionAddedEvent = new TrainingSessionAddedIntegrationEvent(trainingSession.Id, trainingSession.Name, trainingSession.MaxReservationsNumber);
             _trainingSessionIntegrationEventService.PublishThroughEventBusAsync(trainingSessionAddedEvent);
 
-            return "Training Session Updated!";
+            return "Training Session Added!";
         }
 
         // PUT api/values/5
