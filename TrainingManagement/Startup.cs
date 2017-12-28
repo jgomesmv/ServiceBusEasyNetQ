@@ -8,8 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TrainingManagement.IntegrationEvents;
 using TrainingManagementSystem.EventBus;
+using TrainingManagementSystem.EventBus.Abstractions;
 using TrainingManagementSystem.EventBusEasyNetQ;
-using IEventBus = TrainingManagementSystem.EventBus.Abstractions.IEventBus;
 using IServiceProvider = System.IServiceProvider;
 
 namespace TrainingManagement
@@ -34,7 +34,7 @@ namespace TrainingManagement
             {
                 var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
 
-                var connectionString = "host=localhost:5672;username=guest;password=guest;platform=TrainingManagement";
+                var connectionString = "host=localhost:5672;username=guest;password=guest;platform=TrainingManagement;publisherConfirms=true";
 
                 return new DefaultEasyNetQPersisterConnection(connectionString, logger);
             });
@@ -62,7 +62,7 @@ namespace TrainingManagement
 
         private void RegisterEventBus(IServiceCollection services)
         {
-            services.AddSingleton<IEventBus, EventBusEasyNetQ>(sp =>
+            services.AddSingleton<IEventBusResilient, EventBusEasyNetQ>(sp =>
             {
                 var easyNetQPersisterConnection = sp.GetRequiredService<IEasyNetQPersisterConnection>();
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
@@ -81,7 +81,7 @@ namespace TrainingManagement
 
         private void ConfigureEventBus(IApplicationBuilder app)
         {
-            var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+            var eventBus = app.ApplicationServices.GetRequiredService<IEventBusResilient>();
 
             //eventBus.Subscribe<TrainingSessionChangedIntegrationEvent, TrainingSessionChangedIntegrationEventHandler>();
         }

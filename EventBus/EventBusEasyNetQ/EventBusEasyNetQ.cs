@@ -13,7 +13,7 @@ using TrainingManagementSystem.EventBus.Events;
 
 namespace TrainingManagementSystem.EventBusEasyNetQ
 {
-    public class EventBusEasyNetQ : EventBus.Abstractions.IEventBus
+    public class EventBusEasyNetQ : IEventBusResilient
     {
         private readonly IEasyNetQPersisterConnection _serviceBusPersisterConnection;
         private readonly ILogger<DefaultEasyNetQPersisterConnection> _logger;
@@ -44,7 +44,23 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
             properties.CorrelationId = eventName;
             var body = Encoding.UTF8.GetBytes(jsonMessage);
 
-            _bus.Advanced.Publish(Exchange.GetDefault(), eventName, false, properties, body);
+            _bus.Advanced.PublishAsync(Exchange.GetDefault(), eventName, false, properties, body);
+        }
+
+        public void Publish(IntegrationEvent @event, Action<Task, IntegrationEvent> ackCallBack)
+        {
+            var eventName = @event.GetType().Name.Replace(INTEGRATION_EVENT_SUFIX, "");
+            var jsonMessage = JsonConvert.SerializeObject(@event);
+
+            var properties = new MessageProperties();
+            properties.CorrelationId = eventName;
+            var body = Encoding.UTF8.GetBytes(jsonMessage);
+
+            _bus.Advanced.PublishAsync(Exchange.GetDefault(), eventName, false, properties, body)
+                .ContinueWith(response =>
+                {
+                    ackCallBack(response, @event);
+                });
         }
 
         public void SubscribeDynamic<TH>(string eventName)
@@ -97,8 +113,9 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
 
             try
             {
-                var subscriptionResult = _bus.Subscribe<T>(eventName, msg => Console.WriteLine($"Event unsubscribed: {eventName}"));
-                subscriptionResult.ConsumerCancellation.Dispose();
+                var queue = _bus.Advanced.QueueDeclare(eventName);
+                _bus.Advanced.Consume(queue, msg => Console.WriteLine($"Event unsubscribed: {eventName}"))
+                    .Dispose();
             }
             catch (EasyNetQException)
             {
