@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
 using RegistrationManagement.IntegrationEvents.EventHandling;
 using RegistrationManagement.IntegrationEvents.Events;
 using TrainingManagementSystem.EventBus;
-using TrainingManagementSystem.EventBus.Abstractions;
 using TrainingManagementSystem.EventBusEasyNetQ;
+using IEventBus = TrainingManagementSystem.EventBus.Abstractions.IEventBus;
+using IServiceProvider = System.IServiceProvider;
 
 namespace RegistrationManagement
 {
@@ -37,7 +32,7 @@ namespace RegistrationManagement
             {
                 var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
 
-                var connectionString = "";
+                var connectionString = "host=localhost:5672;username=guest;password=guest;platform=TrainingManagement";
 
                 return new DefaultEasyNetQPersisterConnection(connectionString, logger);
             });
@@ -73,8 +68,6 @@ namespace RegistrationManagement
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
                 var eventBusSubcriptionsManager = sp.GetRequiredService<IEventBusSubscriptionsManager>();
-
-                var retryCount = 5;
 
                 return new EventBusEasyNetQ(easyNetQPersisterConnection, logger, eventBusSubcriptionsManager, iLifetimeScope);
             });

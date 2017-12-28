@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Microsoft.ApplicationInsights.Extensibility;
+using EasyNetQ;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
 using TrainingManagement.IntegrationEvents;
 using TrainingManagementSystem.EventBus;
-using TrainingManagementSystem.EventBus.Abstractions;
 using TrainingManagementSystem.EventBusEasyNetQ;
+using IEventBus = TrainingManagementSystem.EventBus.Abstractions.IEventBus;
+using IServiceProvider = System.IServiceProvider;
 
 namespace TrainingManagement
 {
@@ -39,7 +34,7 @@ namespace TrainingManagement
             {
                 var logger = sp.GetRequiredService<ILogger<DefaultEasyNetQPersisterConnection>>();
 
-                var connectionString = "";
+                var connectionString = "host=localhost:5672;username=guest;password=guest;platform=TrainingManagement";
 
                 return new DefaultEasyNetQPersisterConnection(connectionString, logger);
             });

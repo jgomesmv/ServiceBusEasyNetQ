@@ -32,7 +32,7 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
         {
             if (!_bus.IsConnected)
             {
-                _bus = _bus = RabbitHutch.CreateBus(_connectionString);
+                _bus = RabbitHutch.CreateBus(_connectionString);
             }
 
             return _bus;
