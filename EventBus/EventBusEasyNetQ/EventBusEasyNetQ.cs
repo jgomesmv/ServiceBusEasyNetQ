@@ -56,7 +56,7 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
             properties.CorrelationId = eventName;
             var body = Encoding.UTF8.GetBytes(jsonMessage);
 
-            _bus.Advanced.PublishAsync(Exchange.GetDefault(), eventName, false, properties, body)
+            _bus.Advanced.PublishAsync(Exchange.GetDefault(), eventName, true, properties, body)
                 .ContinueWith(response =>
                 {
                     ackCallBack(response, @event);
@@ -81,7 +81,7 @@ namespace TrainingManagementSystem.EventBusEasyNetQ
                 try
                 {
                     var queue = _bus.Advanced.QueueDeclare(eventName);
-                    var exchange = _bus.Advanced.ExchangeDeclare(eventName, ExchangeType.Topic);
+                    var exchange = _bus.Advanced.ExchangeDeclare(eventName, ExchangeType.Fanout);
                     _bus.Advanced.Bind(exchange, queue, eventName);
 
                     _bus.Advanced.Consume(queue, (body, properties, info) => Task.Factory.StartNew(async () =>
